@@ -18,12 +18,8 @@ spec:
         - name: trades
           image: trades:dev
           imagePullPolicy: Never # Use the local image
-          # env:
-          #   - name: KAFKA_BROKER_ADDRESS
-          #     value: kafka-e11b-kafka-bootstrap.kafka.svc.cluster.local:9092
-          #   - name: KAFKA_TOPIC
-          #     value: "trades"
-          #   # - name: PAIRS
-          #   # value: ["BTC/USD", "BTC/EUR", "ETH/EUR", "ETH/USD", "SOL/USD", "SOL/EUR", "XRP/USD", "XRP/EUR"]
-          #   - name: DATA_SOURCE
-          #     value: "live
+          env:
+            - name: KAFKA_BROKER_ADDRESS
+              value: kafka-e11b-kafka-bootstrap.kafka.svc.cluster.local:9092
+            - name: KAFKA_TOPIC
+              value: "trades"

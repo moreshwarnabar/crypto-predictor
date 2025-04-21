@@ -1,7 +1,8 @@
 from loguru import logger
 from quixstreams import Application
 
-from kraken_api import KrakenAPI, Trade
+from trades.kraken_api import KrakenAPI, Trade
+from trades.config import settings
 
 def run(
     broker_address: str,
@@ -31,14 +32,17 @@ def run(
                 )
 
                 logger.info(f"Produced message to topic: {topic.name}")
+                logger.info(f"Trade {event.to_dict()} pushed to kafka")
 
             import time
             time.sleep(1)
 
 if __name__ == "__main__":
-    api = KrakenAPI(product_ids=['BTC/EUR'])
+    config = settings
+    
+    api = KrakenAPI(product_ids=config.product_ids)
     run(
-        broker_address='localhost:31234',
-        kafka_topic_name='trades',
+        broker_address=config.kafka_broker_address,
+        kafka_topic_name=config.kafka_topic,
         kraken_api=api
     )
