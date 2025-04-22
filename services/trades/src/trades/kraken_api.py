@@ -1,7 +1,9 @@
 import json
+
 from loguru import logger
 from pydantic import BaseModel
 from websocket import create_connection
+
 
 class Trade(BaseModel):
     product_id: str
@@ -12,8 +14,8 @@ class Trade(BaseModel):
     def to_dict(self) -> dict:
         return self.model_dump()
 
-class KrakenAPI:
 
+class KrakenAPI:
     URL = 'wss://ws.kraken.com/v2'
 
     def __init__(self, product_ids: list[str]):
@@ -25,28 +27,28 @@ class KrakenAPI:
     def get_trades(self) -> list[Trade]:
         data = self._ws_client.recv()
 
-        if "heartbeat" in data:
-            logger.info("Heartbeat received")
+        if 'heartbeat' in data:
+            logger.info('Heartbeat received')
             return []
-        
+
         try:
             data = json.loads(data)
         except json.JSONDecodeError as e:
-            logger.error(f"Error decoding JSON: {e}")
+            logger.error(f'Error decoding JSON: {e}')
             return []
-        
+
         try:
             trades_data = data['data']
         except KeyError as e:
             logger.error(f"No 'data' field in the message: {e}")
             return []
-        
+
         trades = [
             Trade(
                 product_id=trade['symbol'],
                 price=float(trade['price']),
                 quantity=float(trade['qty']),
-                timestamp=trade['timestamp']
+                timestamp=trade['timestamp'],
             )
             for trade in trades_data
         ]
@@ -55,14 +57,16 @@ class KrakenAPI:
 
     def _subscribe(self):
         self._ws_client.send(
-            json.dumps({
-                "method": "subscribe",
-                "params": {
-                    "channel": "trade",
-                    "symbol": self.product_ids,
-                    "snapshot": False
+            json.dumps(
+                {
+                    'method': 'subscribe',
+                    'params': {
+                        'channel': 'trade',
+                        'symbol': self.product_ids,
+                        'snapshot': False,
+                    },
                 }
-            })
+            )
         )
 
         for _ in self.product_ids:
