@@ -14,6 +14,7 @@ dependencies = [
 [tool.uv.workspace]
 members = [
     "services/trades",
+    "services/candles",
 ]
 
 [tool.uv.sources]
