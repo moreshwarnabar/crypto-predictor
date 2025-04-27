@@ -35,6 +35,7 @@ def run(
     kafka_input_topic: str,
     kafka_output_topic: str,
     candle_duration: int,
+    kafka_consumer_group: str,
 ):
     """
     Transforms a stream of input trades into a stream of output candles.
@@ -48,9 +49,11 @@ def run(
         kafka_input_topic (str): The topic to ingest trades from.
         kafka_output_topic (str): The topic to produce candles to.
         candle_duration (int): The duration of the candles in seconds.
+        kafka_consumer_group (str): The consumer group to use for the application.
     """
     app = Application(
         broker_address=kafka_broker_address,
+        consumer_group=kafka_consumer_group,
     )
 
     trades_topic = app.topic(kafka_input_topic, value_deserializer='json')
@@ -117,4 +120,5 @@ if __name__ == '__main__':
         kafka_input_topic=settings.kafka_input_topic,
         kafka_output_topic=settings.kafka_output_topic,
         candle_duration=settings.candle_duration,
+        kafka_consumer_group=settings.kafka_consumer_group,
     )
