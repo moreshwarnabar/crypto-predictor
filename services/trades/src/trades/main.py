@@ -14,10 +14,7 @@ def run(broker_address: str, kafka_topic_name: str, kraken_api: KrakenAPI):
         while True:
             events: list[Trade] = kraken_api.get_trades()
             for event in events:
-                message = topic.serialize(
-                    # key=event["id"],
-                    value=event.to_dict()
-                )
+                message = topic.serialize(key=event.symbol, value=event.to_dict())
 
                 producer.produce(topic=topic.name, value=message.value, key=message.key)
 
@@ -32,7 +29,7 @@ def run(broker_address: str, kafka_topic_name: str, kraken_api: KrakenAPI):
 if __name__ == '__main__':
     config = settings
 
-    api = KrakenAPI(product_ids=config.product_ids)
+    api = KrakenAPI(symbols=config.symbols)
     run(
         broker_address=config.kafka_broker_address,
         kafka_topic_name=config.kafka_topic,

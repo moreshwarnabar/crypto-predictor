@@ -62,14 +62,14 @@ class KrakenAPI:
                     'method': 'subscribe',
                     'params': {
                         'channel': 'trade',
-                        'symbol': self.product_ids,
+                        'symbol': self.symbols,
                         'snapshot': False,
                     },
                 }
             )
         )
 
-        for _ in self.product_ids:
+        for _ in self.symbols:
             _ = self._ws_client.recv()
             _ = self._ws_client.recv()
 
