@@ -6,7 +6,7 @@ from websocket import create_connection
 
 
 class Trade(BaseModel):
-    product_id: str
+    symbol: str
     price: float
     quantity: float
     timestamp: str
@@ -18,8 +18,8 @@ class Trade(BaseModel):
 class KrakenAPI:
     URL = 'wss://ws.kraken.com/v2'
 
-    def __init__(self, product_ids: list[str]):
-        self.product_ids = product_ids
+    def __init__(self, symbols: list[str]):
+        self.symbols = symbols
 
         self._ws_client = create_connection(self.URL)
         self._subscribe()
@@ -45,7 +45,7 @@ class KrakenAPI:
 
         trades = [
             Trade(
-                product_id=trade['symbol'],
+                symbol=trade['symbol'],
                 price=float(trade['price']),
                 quantity=float(trade['qty']),
                 timestamp=trade['timestamp'],
