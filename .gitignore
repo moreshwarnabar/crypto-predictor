@@ -11,3 +11,11 @@ wheels/
 
 # env
 **/*.env
+
+.ruff_cache
+
+# direnv
+.env.local
+
+# quixstreams
+state/

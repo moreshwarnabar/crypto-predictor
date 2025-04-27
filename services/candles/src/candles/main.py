@@ -1,5 +1,33 @@
+from datetime import timedelta
+
 from loguru import logger
 from quixstreams import Application
+
+
+def init_candle(trade: dict) -> dict:
+    """
+    Initialize a candle with the first trade
+    """
+    return {
+        'open': trade['price'],
+        'high': trade['price'],
+        'low': trade['price'],
+        'close': trade['price'],
+        'volume': trade['quantity'],
+        'symbol': trade['symbol'],
+    }
+
+
+def update_candle(candle: dict, trade: dict) -> dict:
+    """
+    Update the candle with a new trade
+    """
+    candle['close'] = trade['price']
+    candle['high'] = max(candle['high'], trade['price'])
+    candle['low'] = min(candle['low'], trade['price'])
+    candle['volume'] += trade['quantity']
+
+    return candle
 
 
 def run(
@@ -33,7 +61,46 @@ def run(
 
     # Update the dataframe to log the received trades for now.
     # TODO: replace with the actual logic to aggregate trades into candles.
-    sdf = sdf.update(lambda message: logger.info(f'Received trade: {message}'))
+    sdf = (
+        # define the tumbling window
+        sdf.tumbling_window(timedelta(seconds=candle_duration))
+        # reducers to aggregate trades into candles
+        .reduce(
+            reducer=update_candle,  # updates the candle with a new trade
+            initializer=init_candle,  # returns initial value for the candle
+        )
+    )
+
+    sdf = sdf.current()
+
+    # extract the candle details and re-format the dataframe
+    sdf['opening_price'] = sdf['value']['open']
+    sdf['high_price'] = sdf['value']['high']
+    sdf['low_price'] = sdf['value']['low']
+    sdf['closing_price'] = sdf['value']['close']
+    sdf['volume'] = sdf['value']['volume']
+    sdf['symbol'] = sdf['value']['symbol']
+
+    sdf['window_start_ms'] = sdf['start']
+    sdf['window_end_ms'] = sdf['end']
+
+    # keeping relevant columns
+    sdf = sdf[
+        [
+            'symbol',
+            'window_start_ms',
+            'window_end_ms',
+            'opening_price',
+            'high_price',
+            'low_price',
+            'closing_price',
+            'volume',
+        ]
+    ]
+
+    sdf['candle_duration'] = candle_duration
+
+    sdf = sdf.update(lambda value: logger.debug(f'Candle: {value}'))
 
     # Write the transformed dataframe to the candles topic.
     sdf = sdf.to_topic(candles_topic)
@@ -43,9 +110,11 @@ def run(
 
 
 if __name__ == '__main__':
+    from candles.config import settings
+
     run(
-        kafka_broker_address='localhost:31234',
-        kafka_input_topic='trades',
-        kafka_output_topic='candles',
-        candle_duration=60,
+        kafka_broker_address=settings.kafka_broker_address,
+        kafka_input_topic=settings.kafka_input_topic,
+        kafka_output_topic=settings.kafka_output_topic,
+        candle_duration=settings.candle_duration,
     )
