@@ -2,7 +2,7 @@ dev:
 	uv run services/${service}/src/${service}/main.py
 
 build-dev:
-	docker build -t ${service}:dev -f docker/${service}.Dockerfile .
+	docker build -t ${service}:dev --build-arg SERVICE=${service} -f docker/Dockerfile .
 
 push-dev:
 	kind load docker-image ${service}:dev --name crypto-cluster
