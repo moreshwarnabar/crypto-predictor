@@ -1,6 +1,8 @@
 from loguru import logger
 from quixstreams import Application
 
+from technical_indicators.candle import update_candle_state
+
 
 def run(
     kafka_broker_address: str,
@@ -37,8 +39,10 @@ def run(
     # filter the candles by the candle duration
     sdf = sdf[sdf['candle_duration'] == candle_duration]
 
-    # Update the dataframe to log the received candles for now.
-    # TODO: replace with the actual logic to aggregate candles into technical indicators.
+    # Add candles to a state dictionary
+    sdf = sdf.apply(update_candle_state, stateful=True)
+
+    # TODO: Compute the technical indicators
 
     sdf = sdf.update(lambda value: logger.debug(f'Value: {value}'))
 
