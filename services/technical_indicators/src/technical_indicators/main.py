@@ -2,6 +2,7 @@ from loguru import logger
 from quixstreams import Application
 
 from technical_indicators.candle import update_candle_state
+from technical_indicators.indicators import compute_technical_indicators
 
 
 def run(
@@ -43,8 +44,9 @@ def run(
     sdf = sdf.apply(update_candle_state, stateful=True)
 
     # TODO: Compute the technical indicators
+    sdf = sdf.apply(compute_technical_indicators, stateful=True)
 
-    sdf = sdf.update(lambda value: logger.debug(f'Value: {value}'))
+    sdf = sdf.update(lambda value: logger.debug(f'Final Candle: {value}'))
 
     # Write the transformed dataframe to the technical indicators topic.
     sdf = sdf.to_topic(technical_indicators_topic)

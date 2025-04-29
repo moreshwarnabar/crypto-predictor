@@ -32,7 +32,9 @@ def update_candle_state(candle: dict, state: State):
     candles = state.get('candles', default=[])
 
     # check if new candle corresponds to the same window as the state
-    if is_same_window(candle, candles[-1]):
+    if not candles:
+        candles.append(candle)
+    elif is_same_window(candle, candles[-1]):
         candles[-1] = candle
     else:
         candles.append(candle)
@@ -41,4 +43,5 @@ def update_candle_state(candle: dict, state: State):
         candles.pop(0)
 
     state.set('candles', candles)
-    return {'candles': candles}
+
+    return candle
