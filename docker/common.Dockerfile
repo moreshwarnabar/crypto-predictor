@@ -1,5 +1,5 @@
 # Use a Python image with uv pre-installed
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim as builder
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
 
 ARG SERVICE
 
@@ -38,4 +38,4 @@ ENV PATH="/app/.venv/bin:$PATH"
 # Reset the entrypoint, don't invoke `uv`
 ENTRYPOINT []
 
-CMD bash -c "python services/${SERVICE}/src/${SERVICE}/main.py"
+CMD ["sh", "-c", "python", "services/${SERVICE}/src/${SERVICE}/main.py"]
