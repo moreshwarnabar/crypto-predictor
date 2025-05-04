@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: technical_indicators
+  name: technical-indicators
   labels:
-    app: technical_indicators
+    app: technical-indicators
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: technical_indicators
+      app: technical-indicators
   template:
     metadata:
       labels:
-        app: technical_indicators
+        app: technical-indicators
     spec:
       containers:
-        - name: technical_indicators
+        - name: technical-indicators
           image: technical_indicators:dev
           imagePullPolicy: Never # Use the local image
           env:
@@ -24,9 +24,9 @@ spec:
             - name: KAFKA_INPUT_TOPIC
               value: "candles"
             - name: KAFKA_OUTPUT_TOPIC
-              value: "technical_indicators"
+              value: "technical-indicators"
             - name: KAFKA_CONSUMER_GROUP
-              value: "technical_indicators_consumer_group"
+              value: "technical-indicators-consumer-group"
             - name: CANDLE_DURATION
               value: "60"
             - name: MAX_CANDLES
