@@ -58,6 +58,15 @@ def run(
 if __name__ == '__main__':
     from technical_indicators.config import settings
 
+    # TODO: Use a dedicated migration tool for this, e.g. when there are multiple tables to manage.
+    # from technical_indicators.risingwave import create_table
+
+    # create_table(
+    #     table_name=settings.risingwave_table_name,
+    #     kafka_topic=settings.kafka_output_topic,
+    #     kafka_broker_address=settings.kafka_broker_address,
+    # )
+
     run(
         kafka_broker_address=settings.kafka_broker_address,
         kafka_input_topic=settings.kafka_input_topic,

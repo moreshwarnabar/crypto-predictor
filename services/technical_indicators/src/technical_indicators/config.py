@@ -13,5 +13,7 @@ class Settings(BaseSettings):
     candle_duration: int
     max_candles: int
 
+    risingwave_table_name: str
+
 
 settings = Settings()

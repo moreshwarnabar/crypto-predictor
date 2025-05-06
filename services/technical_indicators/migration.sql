@@ -1,0 +1,32 @@
+CREATE TABLE technical_indicators (
+    symbol VARCHAR,
+    opening_price FLOAT,
+    high_price FLOAT,
+    low_price FLOAT,
+    closing_price FLOAT,
+    volume FLOAT,
+    window_start_ms BIGINT,
+    window_end_ms BIGINT,
+    candle_duration INT,
+    close_prices_sma_7 FLOAT,
+    close_prices_sma_14 FLOAT,
+    close_prices_sma_21 FLOAT,
+    close_prices_sma_60 FLOAT,
+    close_prices_ema_7 FLOAT,
+    close_prices_ema_14 FLOAT,
+    close_prices_ema_21 FLOAT,
+    close_prices_ema_60 FLOAT,
+    close_prices_rsi_7 FLOAT,
+    close_prices_rsi_14 FLOAT,
+    close_prices_rsi_21 FLOAT,
+    close_prices_rsi_60 FLOAT,
+    close_prices_macd_7 FLOAT,
+    close_prices_macd_7_signal FLOAT,
+    close_prices_macd_7_hist FLOAT,
+    close_prices_obv FLOAT,
+    PRIMARY KEY (symbol, window_start_ms, window_end_ms)
+) WITH (
+    connector='kafka',
+    topic='technical_indicators',
+    properties.bootstrap.server='kafka-e11b-kafka-bootstrap.kafka.svc.cluster.local:9092'
+) FORMAT PLAIN ENCODE JSON;
