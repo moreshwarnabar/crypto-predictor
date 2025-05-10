@@ -8,6 +8,7 @@ dependencies = [
     "candles",
     "loguru>=0.7.3",
     "quixstreams>=3.13.1",
+    "requests>=2.32.3",
     "ta-lib>=0.6.3",
     "technical-indicators",
     "trades",
