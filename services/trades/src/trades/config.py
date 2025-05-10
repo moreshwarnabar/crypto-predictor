@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     ]
     kafka_broker_address: str
     kafka_topic: str
+    historical_data: bool = False
+    since_days: int = 30
 
 
 settings = Settings()

@@ -1,21 +1,12 @@
 import json
 
 from loguru import logger
-from pydantic import BaseModel
 from websocket import create_connection
 
-
-class Trade(BaseModel):
-    symbol: str
-    price: float
-    quantity: float
-    timestamp: str
-
-    def to_dict(self) -> dict:
-        return self.model_dump()
+from trades.trade import Trade
 
 
-class KrakenAPI:
+class KrakenWebsocketAPI:
     URL = 'wss://ws.kraken.com/v2'
 
     def __init__(self, symbols: list[str]):
@@ -23,6 +14,9 @@ class KrakenAPI:
 
         self._ws_client = create_connection(self.URL)
         self._subscribe()
+
+    def is_done(self) -> bool:
+        return False
 
     def get_trades(self) -> list[Trade]:
         data = self._ws_client.recv()
