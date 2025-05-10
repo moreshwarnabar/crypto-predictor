@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -8,7 +9,7 @@ class Trade(BaseModel):
     price: float
     quantity: float
     timestamp: str
-    timestamp_ms: float
+    timestamp_ms: Optional[float] = None
 
     @classmethod
     def from_rest_api(
