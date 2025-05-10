@@ -27,6 +27,6 @@ CREATE TABLE technical_indicators (
     PRIMARY KEY (symbol, window_start_ms, window_end_ms)
 ) WITH (
     connector='kafka',
-    topic='technical_indicators',
+    topic='technical-indicators',
     properties.bootstrap.server='kafka-e11b-kafka-bootstrap.kafka.svc.cluster.local:9092'
 ) FORMAT PLAIN ENCODE JSON;
