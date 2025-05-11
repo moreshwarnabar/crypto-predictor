@@ -9,3 +9,6 @@ deploy:
 
 lint:
 	ruff check . --fix
+
+migrate-table:
+	psql -h localhost -p 4567 -d dev -U root -f services/technical_indicators/migration.sql
