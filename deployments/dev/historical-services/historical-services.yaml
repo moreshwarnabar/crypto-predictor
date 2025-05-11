@@ -1,4 +1,15 @@
 apiVersion: apps/v1
+kind: ConfigMap
+metadata:
+  name: hist-svcs-config
+  namespace: hist-svcs
+data:
+  KAFKA_BROKER_ADDRESS: "kafka-e11b-kafka-bootstrap.kafka.svc.cluster.local:9092"
+  TRADES_TOPIC: "trades_historical"
+  CANDLES_TOPIC: "candles_historical"
+
+---
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: trades-historical
@@ -21,9 +32,15 @@ spec:
           imagePullPolicy: Never # Use the local image
           env:
             - name: KAFKA_BROKER_ADDRESS
-              value: kafka-e11b-kafka-bootstrap.kafka.svc.cluster.local:9092
+              valueFrom:
+                configMapKeyRef:
+                  name: hist-svcs-config
+                  key: KAFKA_BROKER_ADDRESS
             - name: KAFKA_TOPIC
-              value: "trades_historical"
+              valueFrom:
+                configMapKeyRef:
+                  name: hist-svcs-config
+                  key: TRADES_TOPIC
             - name: HISTORICAL_DATA
               value: "True"
             - name: SINCE_DAYS
@@ -53,11 +70,20 @@ spec:
           imagePullPolicy: Never # Use the local image
           env:
             - name: KAFKA_BROKER_ADDRESS
-              value: kafka-e11b-kafka-bootstrap.kafka.svc.cluster.local:9092
+              valueFrom:
+                configMapKeyRef:
+                  name: hist-svcs-config
+                  key: KAFKA_BROKER_ADDRESS
             - name: KAFKA_INPUT_TOPIC
-              value: "trades_historical"
+              valueFrom:
+                configMapKeyRef:
+                  name: hist-svcs-config
+                  key: TRADES_TOPIC
             - name: KAFKA_OUTPUT_TOPIC
-              value: "candles_historical"
+              valueFrom:
+                configMapKeyRef:
+                  name: hist-svcs-config
+                  key: CANDLES_TOPIC
             - name: KAFKA_CONSUMER_GROUP
               value: "candles_consumer_group"
             - name: CANDLE_DURATION
@@ -87,9 +113,15 @@ spec:
           imagePullPolicy: Never # Use the local image
           env:
             - name: KAFKA_BROKER_ADDRESS
-              value: kafka-e11b-kafka-bootstrap.kafka.svc.cluster.local:9092
+              valueFrom:
+                configMapKeyRef:
+                  name: hist-svcs-config
+                  key: KAFKA_BROKER_ADDRESS
             - name: KAFKA_INPUT_TOPIC
-              value: "candles_historical"
+              valueFrom:
+                configMapKeyRef:
+                  name: hist-svcs-config
+                  key: CANDLES_TOPIC
             - name: KAFKA_OUTPUT_TOPIC
               value: "technical-indicators"
             - name: KAFKA_CONSUMER_GROUP
