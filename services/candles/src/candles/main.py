@@ -1,7 +1,21 @@
 from datetime import timedelta
+from typing import Any, List, Optional, Tuple
 
 from loguru import logger
 from quixstreams import Application
+from quixstreams.models import TimestampType
+
+
+def timestamp_extractor(
+    value: any,
+    headers: Optional[List[Tuple[str, Any]]],
+    timestamp: float,
+    timestamp_type: TimestampType,
+) -> int:
+    """
+    Extract the timestamp from the value.
+    """
+    return value['timestamp_ms']
 
 
 def init_candle(trade: dict) -> dict:
@@ -56,14 +70,17 @@ def run(
         consumer_group=kafka_consumer_group,
     )
 
-    trades_topic = app.topic(kafka_input_topic, value_deserializer='json')
+    trades_topic = app.topic(
+        kafka_input_topic,
+        value_deserializer='json',
+        timestamp_extractor=timestamp_extractor,
+    )
     candles_topic = app.topic(kafka_output_topic, value_serializer='json')
 
     # Create a dataframe to ingest trades from the trades topic
     sdf = app.dataframe(topic=trades_topic)
 
     # Update the dataframe to log the received trades for now.
-    # TODO: replace with the actual logic to aggregate trades into candles.
     sdf = (
         # define the tumbling window
         sdf.tumbling_window(timedelta(seconds=candle_duration))
