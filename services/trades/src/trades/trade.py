@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -9,7 +8,25 @@ class Trade(BaseModel):
     price: float
     quantity: float
     timestamp: str
-    timestamp_ms: Optional[float] = None
+    timestamp_ms: float
+
+    @classmethod
+    def from_websocket_api(
+        cls, symbol: str, price: float, quantity: float, timestamp: str
+    ) -> 'Trade':
+        """
+        Convert a trade from the Kraken REST API to a Trade object.
+        """
+        return cls(
+            symbol=symbol,
+            price=price,
+            quantity=quantity,
+            timestamp=timestamp,
+            timestamp_ms=datetime.strptime(
+                timestamp, '%Y-%m-%dT%H:%M:%S.%fZ'
+            ).timestamp()
+            * 1000,
+        )
 
     @classmethod
     def from_rest_api(

@@ -38,7 +38,7 @@ class KrakenWebsocketAPI:
             return []
 
         trades = [
-            Trade(
+            Trade.from_websocket_api(
                 symbol=trade['symbol'],
                 price=float(trade['price']),
                 quantity=float(trade['qty']),
