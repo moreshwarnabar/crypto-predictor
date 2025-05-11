@@ -8,7 +8,7 @@ class Trade(BaseModel):
     price: float
     quantity: float
     timestamp: str
-    timestamp_ms: float
+    timestamp_ms: int
 
     @classmethod
     def from_websocket_api(
@@ -22,10 +22,9 @@ class Trade(BaseModel):
             price=price,
             quantity=quantity,
             timestamp=timestamp,
-            timestamp_ms=datetime.strptime(
-                timestamp, '%Y-%m-%dT%H:%M:%S.%fZ'
-            ).timestamp()
-            * 1000,
+            timestamp_ms=int(
+                datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S.%fZ').timestamp() * 1000
+            ),
         )
 
     @classmethod
@@ -42,7 +41,7 @@ class Trade(BaseModel):
             timestamp=datetime.fromtimestamp(timestamp_sec, tz=timezone.utc).strftime(
                 '%Y-%m-%dT%H:%M:%S.%fZ'
             ),
-            timestamp_ms=timestamp_sec * 1000,
+            timestamp_ms=int(timestamp_sec * 1000),
         )
 
     def to_dict(self) -> dict:
