@@ -1,0 +1,17 @@
+[project]
+name = "predictor"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "moreshwarnabar", email = "mrnabar@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "great-expectations>=0.18.8",
+    "risingwave-py>=0.0.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
