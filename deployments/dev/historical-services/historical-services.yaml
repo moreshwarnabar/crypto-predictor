@@ -1,4 +1,4 @@
-apiVersion: apps/v1
+apiVersion: v1
 kind: ConfigMap
 metadata:
   name: hist-svcs-config
@@ -9,23 +9,21 @@ data:
   CANDLES_TOPIC: "candles_historical"
 
 ---
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 metadata:
   name: trades-historical
   namespace: hist-svcs
   labels:
     app: trades-historical
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: trades-historical
+  backoffLimit: 4
   template:
     metadata:
       labels:
         app: trades-historical
     spec:
+      restartPolicy: OnFailure
       containers:
         - name: trades-historical
           image: trades:dev
@@ -44,26 +42,24 @@ spec:
             - name: HISTORICAL_DATA
               value: "True"
             - name: SINCE_DAYS
-              value: "30"
+              value: "90"
 
 ---
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 metadata:
   name: candles-historical
   namespace: hist-svcs
   labels:
     app: candles-historical
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: candles-historical
+  backoffLimit: 4
   template:
     metadata:
       labels:
         app: candles-historical
     spec:
+      restartPolicy: OnFailure
       containers:
         - name: candles-historical
           image: candles:dev
@@ -90,23 +86,21 @@ spec:
               value: "60"
 
 ---
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 metadata:
   name: technical-indicators-historical
   namespace: hist-svcs
   labels:
     app: technical-indicators-historical
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: technical-indicators-historical
+  backoffLimit: 4
   template:
     metadata:
       labels:
         app: technical-indicators-historical
     spec:
+      restartPolicy: OnFailure
       containers:
         - name: technical-indicators-historical
           image: technical_indicators:dev
