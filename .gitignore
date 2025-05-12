@@ -19,3 +19,6 @@ wheels/
 
 # quixstreams
 state/
+
+# minio credentials
+credentials.json
