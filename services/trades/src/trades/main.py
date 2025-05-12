@@ -37,7 +37,7 @@ if __name__ == '__main__':
 
     if config.historical_data:
         logger.info('Using historical data')
-        api = KrakenRestAPI(symbol=config.symbols[0], since_days=config.since_days)
+        api = KrakenRestAPI(symbol=config.symbols[2], since_days=config.since_days)
     else:
         logger.info('Using real-time data')
         api = KrakenWebsocketAPI(symbols=config.symbols)

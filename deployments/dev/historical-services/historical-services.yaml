@@ -5,8 +5,8 @@ metadata:
   namespace: hist-svcs
 data:
   KAFKA_BROKER_ADDRESS: "kafka-e11b-kafka-bootstrap.kafka.svc.cluster.local:9092"
-  TRADES_TOPIC: "trades_historical"
-  CANDLES_TOPIC: "candles_historical"
+  TRADES_TOPIC: "trades_historical_ethereum"
+  CANDLES_TOPIC: "candles_historical_ethereum"
 
 ---
 apiVersion: batch/v1
