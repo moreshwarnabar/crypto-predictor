@@ -2,6 +2,25 @@ import great_expectations as ge
 import pandas as pd
 from loguru import logger
 from risingwave import OutputFormat, RisingWave, RisingWaveConnOptions
+from ydata_profiling import ProfileReport
+
+
+def profile_data(data: pd.DataFrame, output_file: str):
+    """
+    Profile the data and save the report to the given file.
+    Generates a HTML file containing the EDA report.
+
+    Args:
+        data: The data to profile.
+        output_file: The file to save the report to.
+    """
+    profile = ProfileReport(
+        data,
+        tsmode=True,
+        sortby='window_start_ms',
+        title='Data Profiling Report',
+    )
+    profile.to_file(output_file)
 
 
 def validate_data(data: pd.DataFrame):
@@ -15,8 +34,8 @@ def validate_data(data: pd.DataFrame):
         column='closing_price',
         min_value=0,
         max_value=float('inf'),
-        inclusive_min=False,
-        inclusive_max=False,
+        strict_min=True,
+        strict_max=True,
     )
     if not validation_result.success:
         raise ValueError(validation_result.get_failure_cases())
@@ -26,8 +45,8 @@ def validate_data(data: pd.DataFrame):
         column='target',
         min_value=0,
         max_value=float('inf'),
-        inclusive_min=False,
-        inclusive_max=False,
+        strict_min=True,
+        strict_max=True,
     )
     if not validation_result.success:
         raise ValueError(validation_result.get_failure_cases())
@@ -35,7 +54,7 @@ def validate_data(data: pd.DataFrame):
     # Check that closing price is not NaN.
     validation_result = ge_data.expect_column_values_to_be_of_type(
         column='closing_price',
-        type='float64',
+        type_='float64',
     )
     if not validation_result.success:
         raise ValueError(validation_result.get_failure_cases())
@@ -102,6 +121,7 @@ def train(
     since_days: int,
     candle_duration: int,
     pred_horizon_sec: int,
+    generate_report: bool,
 ):
     """
     Train the model for the given symbol.
@@ -126,6 +146,8 @@ def train(
     validate_data(data)
 
     # Perform EDA on the data (Data Profiling).
+    if generate_report:
+        profile_data(data, 'data_profiling.html')
 
 
 if __name__ == '__main__':
@@ -139,4 +161,5 @@ if __name__ == '__main__':
         since_days=30,
         candle_duration=60,
         pred_horizon_sec=300,
+        generate_report=False,
     )
