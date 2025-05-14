@@ -1,8 +1,13 @@
+import os
+
 import great_expectations as ge
+import mlflow
 import pandas as pd
 from loguru import logger
 from risingwave import OutputFormat, RisingWave, RisingWaveConnOptions
 from ydata_profiling import ProfileReport
+
+from predictor.utils import get_experiment_name
 
 
 def profile_data(data: pd.DataFrame, output_file: str):
@@ -122,32 +127,56 @@ def train(
     candle_duration: int,
     pred_horizon_sec: int,
     generate_report: bool,
+    mlflow_tracking_uri: str,
 ):
     """
     Train the model for the given symbol.
     Pushes to the model registry.
     """
-    # Load the data from the risingwave table.
-    data = load_data_from_risingwave(
-        host=rw_host,
-        port=rw_port,
-        user=rw_user,
-        password=rw_password,
-        database=rw_database,
-        symbol=symbol,
-        since_days=since_days,
-        candle_duration=candle_duration,
+    logger.info(f'Setting MLFlow tracking URI to {mlflow_tracking_uri}')
+    mlflow.set_tracking_uri(mlflow_tracking_uri)
+
+    logger.info(f'Setting MLFlow experiment to {symbol}')
+    mlflow.set_experiment(
+        get_experiment_name(symbol, candle_duration, pred_horizon_sec)
     )
 
-    # Add the target column to the dataframe.
-    data['target'] = data['closing_price'].shift(-pred_horizon_sec // candle_duration)
+    with mlflow.start_run() as run:
+        logger.info(f'Starting MLFlow run {run.info.run_id}')
 
-    # Validate the data.
-    validate_data(data)
+        # Load the data from the risingwave table.
+        data = load_data_from_risingwave(
+            host=rw_host,
+            port=rw_port,
+            user=rw_user,
+            password=rw_password,
+            database=rw_database,
+            symbol=symbol,
+            since_days=since_days,
+            candle_duration=candle_duration,
+        )
 
-    # Perform EDA on the data (Data Profiling).
-    if generate_report:
-        profile_data(data, 'data_profiling.html')
+        # Add the target column to the dataframe.
+        data['target'] = data['closing_price'].shift(
+            -pred_horizon_sec // candle_duration
+        )
+
+        # Log the data to mlflow.
+        dataset = mlflow.data.from_pandas(data)
+        mlflow.log_input(dataset, context='training')
+
+        # Validate the data.
+        validate_data(data)
+
+        mlflow.log_param('data-shape', data.shape)
+
+        # Perform EDA on the data (Data Profiling).
+        if generate_report:
+            profile_data(data, 'data_profiling.html')
+        if os.path.exists('data_profiling.html'):
+            mlflow.log_artifact(
+                local_path='data_profiling.html', artifact_path='eda_report'
+            )
 
 
 if __name__ == '__main__':
@@ -162,4 +191,5 @@ if __name__ == '__main__':
         candle_duration=60,
         pred_horizon_sec=300,
         generate_report=False,
+        mlflow_tracking_uri='http://localhost:8283',
     )
