@@ -5,8 +5,10 @@ import mlflow
 import pandas as pd
 from loguru import logger
 from risingwave import OutputFormat, RisingWave, RisingWaveConnOptions
+from sklearn.metrics import mean_absolute_error
 from ydata_profiling import ProfileReport
 
+from predictor.models import BaselineModel
 from predictor.utils import get_experiment_name
 
 
@@ -113,6 +115,7 @@ def load_data_from_risingwave(
     logger.info(
         f'Loaded {len(data)} rows from risingwave for {symbol} in the last {since_days} days'
     )
+
     return data
 
 
@@ -128,6 +131,7 @@ def train(
     pred_horizon_sec: int,
     generate_report: bool,
     mlflow_tracking_uri: str,
+    train_test_split_ratio: float,
 ):
     """
     Train the model for the given symbol.
@@ -161,6 +165,9 @@ def train(
             -pred_horizon_sec // candle_duration
         )
 
+        # Drop rows with NaN values in the target column.
+        data = data.dropna(subset=['target'])
+
         # Log the data to mlflow.
         dataset = mlflow.data.from_pandas(data)
         mlflow.log_input(dataset, context='training')
@@ -178,6 +185,36 @@ def train(
                 local_path='data_profiling.html', artifact_path='eda_report'
             )
 
+        # Split the data into train and test.
+        train_size = int(len(data) * train_test_split_ratio)
+        train_data = data.iloc[:train_size]
+        test_data = data.iloc[train_size:]
+
+        # Log the train and test data to mlflow.
+        mlflow.log_param('train-data-shape', train_data.shape)
+        mlflow.log_param('test-data-shape', test_data.shape)
+
+        # Split the data into features and target.
+        X_train = train_data.drop(columns=['target'])
+        y_train = train_data['target']
+        X_test = test_data.drop(columns=['target'])
+        y_test = test_data['target']
+
+        # Log the features and target to mlflow.
+        mlflow.log_param('X_train-shape', X_train.shape)
+        mlflow.log_param('y_train-shape', y_train.shape)
+        mlflow.log_param('X_test-shape', X_test.shape)
+        mlflow.log_param('y_test-shape', y_test.shape)
+
+        # Train a baseline model.
+        model = BaselineModel()
+        y_pred = model.predict(X_test)
+
+        # Log the metrics to mlflow.
+        baseline_mae = mean_absolute_error(y_test, y_pred)
+        mlflow.log_metric('mae_baseline', baseline_mae)
+        logger.info(f'Baseline MAE: {baseline_mae}')
+
 
 if __name__ == '__main__':
     train(
@@ -192,4 +229,5 @@ if __name__ == '__main__':
         pred_horizon_sec=300,
         generate_report=False,
         mlflow_tracking_uri='http://localhost:8283',
+        train_test_split_ratio=0.8,
     )

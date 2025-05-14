@@ -2041,6 +2041,7 @@ dependencies = [
     { name = "great-expectations" },
     { name = "mlflow" },
     { name = "risingwave-py" },
+    { name = "scikit-learn" },
     { name = "ydata-profiling" },
 ]
 
@@ -2049,6 +2050,7 @@ requires-dist = [
     { name = "great-expectations", specifier = ">=0.18.8" },
     { name = "mlflow", specifier = ">=2.22.0" },
     { name = "risingwave-py", specifier = ">=0.0.1" },
+    { name = "scikit-learn", specifier = ">=1.6.1" },
     { name = "ydata-profiling", specifier = ">=4.16.1" },
 ]
 
