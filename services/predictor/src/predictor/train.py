@@ -9,7 +9,7 @@ from risingwave import OutputFormat, RisingWave, RisingWaveConnOptions
 from sklearn.metrics import mean_absolute_error
 from ydata_profiling import ProfileReport
 
-from predictor.models import BaselineModel
+from predictor.models import BaselineModel, get_model
 from predictor.utils import get_experiment_name
 
 
@@ -240,8 +240,21 @@ def train(
         logger.info(f'Models summary:\n\n {models}')
 
         # Pick the best model and perform hyper-parameter tuning.
-        best_model = models.loc[models['MAE'].idxmin()]
-        logger.info(f'Best model: {best_model}')
+        best_model = None
+        for model_name in models['model']:
+            try:
+                model = get_model(model_name)
+            except ValueError:
+                logger.error(f'Model {model_name} not found, skipping')
+                continue
+
+        best_model.fit(X_train, y_train)
+
+        # Validate the best model.
+        y_pred = best_model.predict(X_test)
+        mae = mean_absolute_error(y_test, y_pred)
+        mlflow.log_metric('mae_best_model', mae)
+        logger.info(f'Best model MAE: {mae}')
 
 
 if __name__ == '__main__':
