@@ -3,6 +3,7 @@ import os
 import great_expectations as ge
 import mlflow
 import pandas as pd
+from lazypredict.Supervised import LazyRegressor
 from loguru import logger
 from risingwave import OutputFormat, RisingWave, RisingWaveConnOptions
 from sklearn.metrics import mean_absolute_error
@@ -148,6 +149,12 @@ def train(
     with mlflow.start_run() as run:
         logger.info(f'Starting MLFlow run {run.info.run_id}')
 
+        # Log training parameters.
+        mlflow.log_param('since_days', since_days)
+        mlflow.log_param('candle_duration', candle_duration)
+        mlflow.log_param('prediction_horizon_seconds', pred_horizon_sec)
+        mlflow.log_param('train_test_split_ratio', train_test_split_ratio)
+
         # Load the data from the risingwave table.
         data = load_data_from_risingwave(
             host=rw_host,
@@ -167,6 +174,8 @@ def train(
 
         # Drop rows with NaN values in the target column.
         data = data.dropna(subset=['target'])
+        # Drop symbol and candle_duration columns.
+        data = data.drop(columns=['symbol', 'candle_duration'])
 
         # Log the data to mlflow.
         dataset = mlflow.data.from_pandas(data)
@@ -215,6 +224,25 @@ def train(
         mlflow.log_metric('mae_baseline', baseline_mae)
         logger.info(f'Baseline MAE: {baseline_mae}')
 
+        mlflow_tracking_uri = os.environ.get('MLFLOW_TRACKING_URI')
+        del os.environ['MLFLOW_TRACKING_URI']
+        # Train a set of N models using lazy predict.
+        reg = LazyRegressor(
+            verbose=0, ignore_warnings=False, custom_metric=mean_absolute_error
+        )
+        models, _ = reg.fit(X_train, X_test, y_train, y_test)
+        models.reset_index(inplace=True)
+        if 'mean_absolute_error' in models.columns:
+            models.rename(columns={'mean_absolute_error': 'MAE'}, inplace=True)
+
+        os.environ['MLFLOW_TRACKING_URI'] = mlflow_tracking_uri
+        mlflow.log_table(models, 'models_summary.json')
+        logger.info(f'Models summary:\n\n {models}')
+
+        # Pick the best model and perform hyper-parameter tuning.
+        best_model = models.loc[models['MAE'].idxmin()]
+        logger.info(f'Best model: {best_model}')
+
 
 if __name__ == '__main__':
     train(
@@ -227,7 +255,7 @@ if __name__ == '__main__':
         since_days=30,
         candle_duration=60,
         pred_horizon_sec=300,
-        generate_report=False,
+        generate_report=True,
         mlflow_tracking_uri='http://localhost:8283',
         train_test_split_ratio=0.8,
     )

@@ -22,3 +22,6 @@ state/
 
 # minio credentials
 credentials.json
+
+# eda report
+data_profiling.html
