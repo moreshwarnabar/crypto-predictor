@@ -7,6 +7,8 @@ from loguru import logger
 from sklearn.linear_model import HuberRegressor
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import TimeSeriesSplit
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 
 class HuberRegressorWithHyperParameterTuning:
@@ -17,8 +19,13 @@ class HuberRegressorWithHyperParameterTuning:
         Args:
             hyper_params: The hyper-parameters for the model.
         """
-        self.model = HuberRegressor()
         self.hyper_params = hyper_params
+        self.pipe = Pipeline(
+            [
+                ('scaler', StandardScaler()),
+                ('model', HuberRegressor()),
+            ]
+        )
 
     def fit(self, X_train: pd.DataFrame, y_train: pd.Series):
         """
@@ -29,8 +36,9 @@ class HuberRegressorWithHyperParameterTuning:
             y_train: The training target.
         """
         if self.hyper_params.get('hyper_param_trials', 0) == 0:
-            logger.info('No hyper-parameter tuning')
-            self.model.fit(X_train, y_train)
+            logger.info(
+                'No hyper-parameter tuning. Fitting the model with the default parameters'
+            )
         else:
             # perform the hyper-parameter search
             logger.info('Performing hyper-parameter tuning')
@@ -43,8 +51,9 @@ class HuberRegressorWithHyperParameterTuning:
             logger.info(f'Best hyper-parameters: {best_params}')
 
             logger.info('Fitting the model with the best hyper-parameters')
-            self.model = HuberRegressor(**best_params)
-            self.model.fit(X_train, y_train)
+            self.pipe.set_params(**best_params)
+
+        self.pipe.fit(X_train, y_train)
 
     def predict(self, X_test: pd.DataFrame) -> pd.Series:
         """
@@ -56,7 +65,7 @@ class HuberRegressorWithHyperParameterTuning:
         Returns:
             The predicted target.
         """
-        return self.model.predict(X_test)
+        return self.pipe.predict(X_test)
 
     def _hyper_parameter_search(
         self, X_train: pd.DataFrame, y_train: pd.Series, num_trials: int, num_folds: int
@@ -110,11 +119,16 @@ class HuberRegressorWithHyperParameterTuning:
                 )
 
                 # train the model
-                model = HuberRegressor(**params)
-                model.fit(X_train_fold, y_train_fold)
+                pipe = Pipeline(
+                    [
+                        ('scaler', StandardScaler()),
+                        ('model', HuberRegressor(**params)),
+                    ]
+                )
+                pipe.fit(X_train_fold, y_train_fold)
 
                 # evaluate the model
-                y_pred = model.predict(X_val_fold)
+                y_pred = pipe.predict(X_val_fold)
                 mae_scores.append(mean_absolute_error(y_val_fold, y_pred))
 
             return np.mean(mae_scores)
@@ -143,9 +157,14 @@ def get_model(model_name: str) -> Model:
     Returns:
         The model.
     """
-    if model_name == 'huber_regressor':
+    if model_name == 'HuberRegressor':
         logger.info('Getting HuberRegressorWithHyperParameterTuning model')
-        return HuberRegressorWithHyperParameterTuning()
+        return HuberRegressorWithHyperParameterTuning(
+            hyper_params={
+                'hyper_param_trials': 10,
+                'hyper_param_folds': 3,
+            }
+        )
     else:
         raise ValueError(f'Model {model_name} not found')
 
