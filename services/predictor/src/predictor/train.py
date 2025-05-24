@@ -93,6 +93,7 @@ def train_model(
     for model_name in models['Model']:
         try:
             best_model = get_model(model_name)
+            break
         except ValueError:
             logger.error(f'Model {model_name} not found, skipping')
             continue

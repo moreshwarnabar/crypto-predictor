@@ -1,4 +1,4 @@
-from typing import Type, Union
+from typing import Optional, Type, Union
 
 import numpy as np
 import optuna
@@ -20,10 +20,15 @@ class HuberRegressorWithHyperParameterTuning:
             hyper_params: The hyper-parameters for the model.
         """
         self.hyper_params = hyper_params
-        self.pipe = Pipeline(
+        self.pipe = self._create_pipe()
+
+    def _create_pipe(self, params: Optional[dict] = None):
+        if params is None:
+            params = {}
+        return Pipeline(
             [
                 ('scaler', StandardScaler()),
-                ('model', HuberRegressor()),
+                ('model', HuberRegressor(**params)),
             ]
         )
 
@@ -51,7 +56,7 @@ class HuberRegressorWithHyperParameterTuning:
             logger.info(f'Best hyper-parameters: {best_params}')
 
             logger.info('Fitting the model with the best hyper-parameters')
-            self.pipe.set_params(**best_params)
+            self.pipe = self._create_pipe(best_params)
 
         self.pipe.fit(X_train, y_train)
 
@@ -119,12 +124,7 @@ class HuberRegressorWithHyperParameterTuning:
                 )
 
                 # train the model
-                pipe = Pipeline(
-                    [
-                        ('scaler', StandardScaler()),
-                        ('model', HuberRegressor(**params)),
-                    ]
-                )
+                pipe = self._create_pipe(params)
                 pipe.fit(X_train_fold, y_train_fold)
 
                 # evaluate the model
@@ -161,7 +161,7 @@ def get_model(model_name: str) -> Model:
         logger.info('Getting HuberRegressorWithHyperParameterTuning model')
         return HuberRegressorWithHyperParameterTuning(
             hyper_params={
-                'hyper_param_trials': 10,
+                'hyper_param_trials': 0,
                 'hyper_param_folds': 3,
             }
         )
